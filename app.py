@@ -5,401 +5,482 @@ import tempfile
 import os
 import time
 
-# ==================== KONFIGURASI HALAMAN ====================
-st.set_page_config(
-    page_title="WheelScan Pro - Deteksi Kerusakan Ban",
-    page_icon="🛞",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+st.set_page_config(page_title="WheelScan", page_icon="🛞", layout="wide", initial_sidebar_state="collapsed")
 
-# ==================== CUSTOM CSS (Bikin Keren) ====================
+# ==================== CUSTOM CSS PREMIUM ====================
 st.markdown("""
 <style>
-    /* Import font modern */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100..900;1,100..900&display=swap');
+    /* Font */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap');
     
-    html, body, [class*="css"] {
+    * {
         font-family: 'Inter', sans-serif;
     }
     
-    /* Header utama */
-    .main-header {
-        background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
-        padding: 2rem;
-        border-radius: 24px;
-        margin-bottom: 2rem;
-        border: 1px solid #334155;
-        box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3);
+    /* Hide default Streamlit elements */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    
+    /* Main container */
+    .stApp {
+        background: #09090B;
     }
     
-    .main-header h1 {
-        font-size: 2.5rem;
-        font-weight: 700;
-        background: linear-gradient(135deg, #60A5FA 0%, #A78BFA 100%);
+    /* Custom container */
+    .main-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    /* Navbar */
+    .navbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 2rem;
+        background: rgba(9, 9, 11, 0.95);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid #27272A;
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        margin-bottom: 2rem;
+    }
+    
+    .logo {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .logo-icon {
+        font-size: 1.8rem;
+    }
+    
+    .logo-text {
+        font-size: 1.25rem;
+        font-weight: 600;
+        background: linear-gradient(135deg, #A78BFA 0%, #60A5FA 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        margin: 0;
     }
     
-    .main-header p {
-        color: #94A3B8;
-        margin-top: 0.5rem;
-        font-size: 1rem;
+    .nav-links {
+        display: flex;
+        gap: 2rem;
+        color: #A1A1AA;
+        font-size: 0.875rem;
     }
     
-    /* Card hasil deteksi */
+    /* Hero section */
+    .hero {
+        text-align: center;
+        padding: 3rem 2rem 4rem;
+        background: linear-gradient(180deg, #09090B 0%, #18181B 100%);
+        border-radius: 32px;
+        margin-bottom: 3rem;
+        border: 1px solid #27272A;
+    }
+    
+    .hero-badge {
+        display: inline-block;
+        background: #18181B;
+        border: 1px solid #3F3F46;
+        border-radius: 100px;
+        padding: 0.25rem 1rem;
+        font-size: 0.75rem;
+        color: #A78BFA;
+        margin-bottom: 1.5rem;
+    }
+    
+    .hero h1 {
+        font-size: 3.5rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #FFFFFF 0%, #A1A1AA 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 1rem;
+    }
+    
+    .hero p {
+        color: #A1A1AA;
+        font-size: 1.125rem;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
+    /* Upload card */
+    .upload-card {
+        background: #18181B;
+        border-radius: 24px;
+        border: 1px solid #27272A;
+        padding: 2rem;
+        transition: all 0.3s ease;
+    }
+    
+    .upload-card:hover {
+        border-color: #3F3F46;
+        background: #1F1F23;
+    }
+    
+    .upload-icon {
+        font-size: 3rem;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+    
+    /* Result card */
     .result-card {
-        background: #1E293B;
-        border-radius: 20px;
-        padding: 1.5rem;
-        margin-top: 1.5rem;
-        border: 1px solid #334155;
-        backdrop-filter: blur(10px);
+        background: #18181B;
+        border-radius: 24px;
+        border: 1px solid #27272A;
+        overflow: hidden;
     }
     
-    .badge-success {
-        background: #10B981;
-        color: white;
-        padding: 0.25rem 0.75rem;
-        border-radius: 999px;
-        font-size: 0.75rem;
+    .result-header {
+        padding: 1rem 1.5rem;
+        background: #1F1F23;
+        border-bottom: 1px solid #27272A;
         font-weight: 600;
-        display: inline-block;
+        color: #FFFFFF;
     }
     
-    .badge-danger {
-        background: #EF4444;
-        color: white;
-        padding: 0.25rem 0.75rem;
-        border-radius: 999px;
+    /* Metric grid */
+    .metric-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+        margin: 1.5rem 0;
+    }
+    
+    .metric-item {
+        background: #1F1F23;
+        border-radius: 16px;
+        padding: 1rem;
+        text-align: center;
+        border: 1px solid #27272A;
+    }
+    
+    .metric-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #FFFFFF;
+    }
+    
+    .metric-label {
         font-size: 0.75rem;
-        font-weight: 600;
-        display: inline-block;
+        color: #71717A;
+        margin-top: 0.25rem;
     }
     
-    .badge-warning {
-        background: #F59E0B;
-        color: white;
-        padding: 0.25rem 0.75rem;
-        border-radius: 999px;
+    /* Detection list */
+    .detection-item {
+        background: #1F1F23;
+        border-radius: 12px;
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-left: 3px solid;
+    }
+    
+    /* Status badges */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 100px;
         font-size: 0.75rem;
-        font-weight: 600;
-        display: inline-block;
+        font-weight: 500;
     }
     
-    /* Divider */
-    .custom-divider {
-        height: 1px;
-        background: linear-gradient(90deg, transparent, #334155, transparent);
-        margin: 2rem 0;
+    .status-healthy {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10B981;
+        border: 1px solid rgba(16, 185, 129, 0.2);
     }
     
-    /* Sidebar styling */
-    [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #0F172A 0%, #0F172A 100%);
-        border-right: 1px solid #334155;
+    .status-warning {
+        background: rgba(245, 158, 11, 0.1);
+        color: #F59E0B;
+        border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+    
+    .status-danger {
+        background: rgba(239, 68, 68, 0.1);
+        color: #EF4444;
+        border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+    
+    /* Recommendation box */
+    .recommend-box {
+        background: linear-gradient(135deg, #1F1F23 0%, #18181B 100%);
+        border-radius: 16px;
+        padding: 1.25rem;
+        margin-top: 1rem;
+        border: 1px solid #27272A;
     }
     
     /* Footer */
     .footer {
         text-align: center;
-        padding: 1.5rem;
-        color: #64748B;
-        font-size: 0.75rem;
-        border-top: 1px solid #334155;
-        margin-top: 2rem;
-    }
-    
-    /* Tombol upload */
-    .upload-area {
-        border: 2px dashed #334155;
-        border-radius: 20px;
         padding: 2rem;
-        text-align: center;
-        background: #0F172A;
-        transition: all 0.3s ease;
+        color: #52525B;
+        font-size: 0.75rem;
+        border-top: 1px solid #27272A;
+        margin-top: 3rem;
     }
     
-    .upload-area:hover {
-        border-color: #60A5FA;
-        background: #1E293B;
+    /* Hide Streamlit branding */
+    .stFileUploader > div:first-child {
+        background: transparent !important;
     }
     
-    /* Metrik card */
-    .metric-card {
-        background: #0F172A;
-        border-radius: 16px;
-        padding: 1rem;
-        text-align: center;
-        border: 1px solid #334155;
+    .stFileUploader > div:first-child > div {
+        background: transparent !important;
     }
     
-    .metric-value {
-        font-size: 2rem;
-        font-weight: 700;
-        color: #60A5FA;
-    }
-    
-    .metric-label {
-        font-size: 0.8rem;
-        color: #94A3B8;
-        margin-top: 0.25rem;
+    button {
+        background: linear-gradient(135deg, #A78BFA 0%, #60A5FA 100%) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 100px !important;
+        padding: 0.5rem 1.5rem !important;
+        font-weight: 500 !important;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# ==================== SIDEBAR ====================
-with st.sidebar:
-    st.markdown("### 🛞 **WheelScan Pro**")
-    st.markdown("---")
-    
-    st.markdown("#### 📋 **Tentang**")
-    st.markdown("""
-    Sistem deteksi kerusakan ban berbasis **YOLOv8** (CNN) yang dirancang untuk membantu teknisi dan pemilik kendaraan mendeteksi dini:
-    """)
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        st.markdown("✅ Retak (Cracks)")
-        st.markdown("✅ Terkelupas (Shelling)")
-    with col2:
-        st.markdown("✅ Perubahan Warna")
-        st.markdown("✅ Kondisi Normal")
-    
-    st.markdown("---")
-    st.markdown("#### 🧠 **Teknologi**")
-    st.markdown("""
-    - **Model:** YOLOv8 (Ultralytics)
-    - **Dataset:** 2.154+ gambar
-    - **Akurasi mAP50:** 90%
-    """)
-    
-    st.markdown("---")
-    st.markdown("#### 📄 **Project**")
-    st.markdown("SC 2026 | ANN-based Detection")
-    
-    st.markdown("---")
-    st.markdown("""
-    <div style="text-align: center; padding: 1rem;">
-        <p style="font-size: 0.7rem; color: #475569;">© 2026 · Built for Academic Project</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-# ==================== HEADER UTAMA ====================
+# ==================== NAVBAR ====================
 st.markdown("""
-<div class="main-header">
-    <h1>🛞 WheelScan Pro</h1>
-    <p>Advanced Tire Defect Detection System — Scan. Detect. Act.</p>
+<div class="navbar">
+    <div class="logo">
+        <span class="logo-icon">🛞</span>
+        <span class="logo-text">WheelScan</span>
+    </div>
+    <div class="nav-links">
+        <span>Dashboard</span>
+        <span>About</span>
+        <span>Documentation</span>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+st.markdown('<div class="main-container">', unsafe_allow_html=True)
+
+# ==================== HERO ====================
+st.markdown("""
+<div class="hero">
+    <div class="hero-badge">
+        ⚡ AI-Powered Detection
+    </div>
+    <h1>Scan tires in seconds,<br>not hours.</h1>
+    <p>Advanced computer vision system that identifies tire defects automatically — cracks, shelling, discoloration, and more.</p>
 </div>
 """, unsafe_allow_html=True)
 
 # ==================== LOAD MODEL ====================
 @st.cache_resource
 def load_model():
-    with st.spinner("🔄 Memuat model kecerdasan buatan..."):
-        model = YOLO('best.pt')
-        return model
+    return YOLO('best.pt')
 
 try:
     model = load_model()
-    st.markdown("""
-    <div style="background: #0F172A; border-radius: 12px; padding: 0.5rem 1rem; margin-bottom: 1rem; border-left: 3px solid #10B981;">
-        <p style="color: #10B981; margin: 0;">✓ System ready · Model loaded successfully</p>
-    </div>
-    """, unsafe_allow_html=True)
 except Exception as e:
-    st.error(f"Gagal memuat model: {e}")
+    st.error(f"Failed to load model: {e}")
     st.stop()
 
-# ==================== UPLOAD AREA ====================
-st.markdown("### 📸 Upload Gambar Ban")
-
-uploaded_file = st.file_uploader(
-    "Seret atau klik untuk memilih gambar",
-    type=["jpg", "jpeg", "png"],
-    label_visibility="collapsed"
-)
-
-# Kolom untuk layout
+# ==================== TWO COLUMN LAYOUT ====================
 col_left, col_right = st.columns([1, 1], gap="large")
 
-# ==================== PROSES GAMBAR ====================
-if uploaded_file is not None:
-    # Simpan file sementara
-    with tempfile.NamedTemporaryFile(delete=False, suffix='.jpg') as tmp_file:
-        tmp_file.write(uploaded_file.getvalue())
-        tmp_path = tmp_file.name
+# ==================== LEFT COLUMN - UPLOAD ====================
+with col_left:
+    st.markdown('<div class="upload-card">', unsafe_allow_html=True)
+    st.markdown('<div class="upload-icon">📸</div>', unsafe_allow_html=True)
+    st.markdown('<h3 style="text-align: center; margin-bottom: 0.5rem;">Upload Tire Image</h3>', unsafe_allow_html=True)
+    st.markdown('<p style="text-align: center; color: #71717A; font-size: 0.875rem; margin-bottom: 1.5rem;">JPG, PNG or JPEG — max 10MB</p>', unsafe_allow_html=True)
     
-    # Tampilkan gambar asli di kolom kiri
-    with col_left:
-        st.markdown("#### 📷 **Original Image**")
-        original_image = Image.open(uploaded_file)
-        st.image(original_image, use_container_width=True)
-        st.caption(f"Resolusi: {original_image.size[0]} x {original_image.size[1]} px")
+    uploaded_file = st.file_uploader(
+        "Choose a file",
+        type=["jpg", "jpeg", "png"],
+        label_visibility="collapsed"
+    )
     
-    # Deteksi
-    with st.spinner("🔍 Menganalisis gambar..."):
-        time.sleep(0.5)  # Efek loading
-        results = model(tmp_path)
-    
-    result = results[0]
-    
-    # Tampilkan hasil deteksi di kolom kanan
-    with col_right:
-        st.markdown("#### 🎯 **Detection Result**")
+    st.markdown('<div style="margin-top: 1rem;"><p style="color: #52525B; font-size: 0.7rem; text-align: center;">⬆️ Drag & drop or click to browse</p></div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# ==================== RIGHT COLUMN - RESULT ====================
+with col_right:
+    if uploaded_file is not None:
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.jpg') as tmp_file:
+            tmp_file.write(uploaded_file.getvalue())
+            tmp_path = tmp_file.name
+        
+        with st.spinner("Analyzing..."):
+            time.sleep(0.3)
+            results = model(tmp_path)
+        
+        result = results[0]
+        
+        st.markdown('<div class="result-card">', unsafe_allow_html=True)
+        st.markdown('<div class="result-header">📊 Detection Result</div>', unsafe_allow_html=True)
         st.image(result.plot(), use_container_width=True)
-    
-    # ==================== HASIL ANALISIS ====================
-    st.markdown('<div class="custom-divider"></div>', unsafe_allow_html=True)
-    st.markdown("### 📊 Hasil Analisis")
-    
-    if result.boxes is not None:
-        # Hitung statistik
-        detected_classes = {}
-        for box in result.boxes:
-            cls = int(box.cls[0])
-            conf = float(box.conf[0])
-            class_name = model.names[cls]
-            if class_name not in detected_classes:
-                detected_classes[class_name] = []
-            detected_classes[class_name].append(conf)
+        st.markdown('</div>', unsafe_allow_html=True)
         
-        # Tampilkan metrik
-        metric_cols = st.columns(4)
-        
-        # Total objek terdeteksi
-        total_detections = sum(len(v) for v in detected_classes.values())
-        with metric_cols[0]:
-            st.markdown(f"""
-            <div class="metric-card">
-                <div class="metric-value">{total_detections}</div>
-                <div class="metric-label">Total Deteksi</div>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        # Status keseluruhan
-        has_defect = any(c != "Wheel" for c in detected_classes.keys())
-        status_color = "#EF4444" if has_defect else "#10B981"
-        status_text = "⚠️ RUSAK" if has_defect else "✅ SEHAT"
-        with metric_cols[1]:
-            st.markdown(f"""
-            <div class="metric-card">
-                <div class="metric-value" style="color: {status_color};">{status_text}</div>
-                <div class="metric-label">Status Ban</div>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        # Confidence rata-rata tertinggi
-        max_conf = max(max(v) for v in detected_classes.values())
-        with metric_cols[2]:
-            st.markdown(f"""
-            <div class="metric-card">
-                <div class="metric-value">{max_conf:.1%}</div>
-                <div class="metric-label">Confidence Tertinggi</div>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        # Jumlah jenis kerusakan
-        defect_types = [c for c in detected_classes.keys() if c != "Wheel"]
-        with metric_cols[3]:
-            st.markdown(f"""
-            <div class="metric-card">
-                <div class="metric-value">{len(defect_types)}</div>
-                <div class="metric-label">Jenis Kerusakan</div>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        # Detail deteksi
-        st.markdown("#### 🔍 **Detail Deteksi**")
-        
-        for class_name, confs in detected_classes.items():
-            avg_conf = sum(confs) / len(confs)
+        # Analysis section
+        if result.boxes is not None and len(result.boxes) > 0:
+            detected_classes = {}
+            for box in result.boxes:
+                cls = int(box.cls[0])
+                conf = float(box.conf[0])
+                class_name = model.names[cls]
+                if class_name not in detected_classes:
+                    detected_classes[class_name] = []
+                detected_classes[class_name].append(conf)
             
-            if class_name == "Wheel":
+            has_defect = any(c != "Wheel" for c in detected_classes.keys())
+            
+            st.markdown('<div style="margin-top: 1.5rem;">', unsafe_allow_html=True)
+            
+            # Metrics
+            all_confs = []
+            for confs in detected_classes.values():
+                all_confs.extend(confs)
+            max_conf = max(all_confs) if all_confs else 0.0
+            
+            st.markdown(f"""
+            <div class="metric-grid">
+                <div class="metric-item">
+                    <div class="metric-value">{max_conf:.1%}</div>
+                    <div class="metric-label">Confidence</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-value">{'⚠️' if has_defect else '✅'}</div>
+                    <div class="metric-label">Status</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-value">{len([c for c in detected_classes.keys() if c != 'Wheel'])}</div>
+                    <div class="metric-label">Defects Found</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-value">{len(detected_classes)}</div>
+                    <div class="metric-label">Total Objects</div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Detection details
+            st.markdown('<p style="font-weight: 500; margin-bottom: 0.75rem;">🔍 Detected Items</p>', unsafe_allow_html=True)
+            
+            for class_name, confs in detected_classes.items():
+                avg_conf = sum(confs) / len(confs)
+                
+                if class_name == "Wheel":
+                    color = "#10B981"
+                    border_color = "rgba(16, 185, 129, 0.2)"
+                    badge = "🟢 Normal"
+                elif class_name == "Cracks-Scratches":
+                    color = "#F59E0B"
+                    border_color = "rgba(245, 158, 11, 0.2)"
+                    badge = "🟡 Crack / Scratch"
+                elif class_name == "Shelling":
+                    color = "#EF4444"
+                    border_color = "rgba(239, 68, 68, 0.2)"
+                    badge = "🔴 Shelling / Chunking"
+                elif class_name == "Discoloration":
+                    color = "#F59E0B"
+                    border_color = "rgba(245, 158, 11, 0.2)"
+                    badge = "🟡 Discoloration"
+                else:
+                    color = "#71717A"
+                    border_color = "rgba(113, 113, 122, 0.2)"
+                    badge = "⚪ Unknown"
+                
                 st.markdown(f"""
-                <div style="background: #0F172A; border-radius: 12px; padding: 0.75rem 1rem; margin-bottom: 0.5rem; border-left: 3px solid #10B981;">
-                    <span class="badge-success">NORMAL</span> <strong>{class_name}</strong>
-                    <span style="float: right; color: #94A3B8;">confidence: {avg_conf:.1%}</span>
+                <div class="detection-item" style="border-left-color: {color}; background: {border_color};">
+                    <span><strong>{badge}</strong> {class_name}</span>
+                    <span style="color: {color}; font-weight: 500;">{avg_conf:.1%}</span>
                 </div>
                 """, unsafe_allow_html=True)
-            elif class_name == "Cracks-Scratches":
-                st.markdown(f"""
-                <div style="background: #0F172A; border-radius: 12px; padding: 0.75rem 1rem; margin-bottom: 0.5rem; border-left: 3px solid #F59E0B;">
-                    <span class="badge-warning">RETAK</span> <strong>{class_name}</strong>
-                    <span style="float: right; color: #94A3B8;">confidence: {avg_conf:.1%}</span>
+            
+            # Recommendation
+            if has_defect:
+                st.markdown("""
+                <div class="recommend-box">
+                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+                        <span style="font-size: 1.25rem;">⚠️</span>
+                        <span style="font-weight: 600;">Action Required</span>
+                    </div>
+                    <p style="color: #A1A1AA; font-size: 0.875rem; margin: 0;">Tire damage detected. Schedule an inspection at your nearest service center immediately.</p>
                 </div>
                 """, unsafe_allow_html=True)
-            elif class_name == "Shelling":
-                st.markdown(f"""
-                <div style="background: #0F172A; border-radius: 12px; padding: 0.75rem 1rem; margin-bottom: 0.5rem; border-left: 3px solid #EF4444;">
-                    <span class="badge-danger">TERKELUPAS</span> <strong>{class_name}</strong>
-                    <span style="float: right; color: #94A3B8;">confidence: {avg_conf:.1%}</span>
+            else:
+                st.markdown("""
+                <div class="recommend-box">
+                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+                        <span style="font-size: 1.25rem;">✅</span>
+                        <span style="font-weight: 600;">All Good</span>
+                    </div>
+                    <p style="color: #A1A1AA; font-size: 0.875rem; margin: 0;">No defects detected. Your tire appears to be in healthy condition.</p>
                 </div>
                 """, unsafe_allow_html=True)
-            elif class_name == "Discoloration":
-                st.markdown(f"""
-                <div style="background: #0F172A; border-radius: 12px; padding: 0.75rem 1rem; margin-bottom: 0.5rem; border-left: 3px solid #F59E0B;">
-                    <span class="badge-warning">PERUBAHAN WARNA</span> <strong>{class_name}</strong>
-                    <span style="float: right; color: #94A3B8;">confidence: {avg_conf:.1%}</span>
-                </div>
-                """, unsafe_allow_html=True)
+            
+            st.markdown('</div>', unsafe_allow_html=True)
         
-        # Rekomendasi
-        st.markdown("#### 💡 **Rekomendasi**")
-        if has_defect:
-            st.warning("""
-            ⚠️ **Kerusakan terdeteksi pada ban Anda!**  
-            Segera periksakan ke bengkel terdekat untuk penanganan lebih lanjut. Berkendara dengan ban rusak dapat membahayakan keselamatan.
-            """)
         else:
-            st.success("""
-            ✅ **Ban dalam kondisi sehat!**  
-            Teruskan perawatan rutin untuk menjaga performa ban tetap optimal.
-            """)
+            st.markdown("""
+            <div style="text-align: center; padding: 2rem;">
+                <span style="font-size: 3rem;">✅</span>
+                <h3 style="margin-top: 0.5rem;">No Defects Detected</h3>
+                <p style="color: #71717A;">The uploaded tire appears to be in good condition.</p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        os.unlink(tmp_path)
     
     else:
-        # Tidak ada deteksi
         st.markdown("""
-        <div style="background: #0F172A; border-radius: 20px; padding: 2rem; text-align: center; border: 1px solid #334155;">
-            <h2 style="color: #10B981;">✅ Tidak Ada Kerusakan</h2>
-            <p style="color: #94A3B8;">Model tidak mendeteksi adanya kerusakan pada ban. Kondisi ban terlihat normal.</p>
+        <div class="result-card">
+            <div class="result-header">📊 Detection Result</div>
+            <div style="padding: 3rem 2rem; text-align: center;">
+                <div style="font-size: 3rem; opacity: 0.5;">🖼️</div>
+                <h3 style="color: #A1A1AA; margin-top: 1rem;">No image uploaded</h3>
+                <p style="color: #52525B; font-size: 0.875rem;">Upload a tire image to start detection</p>
+            </div>
         </div>
         """, unsafe_allow_html=True)
-        
-        st.info("💡 **Tips:** Pastikan gambar diambil dengan pencahayaan cukup dan ban terlihat jelas untuk hasil deteksi yang lebih akurat.")
-    
-    # Bersihkan file temporary
-    os.unlink(tmp_path)
 
-else:
-    # Tampilan saat belum upload gambar
-    with col_left:
-        st.markdown("""
-        <div class="upload-area">
-            <h2 style="color: #60A5FA;">📤</h2>
-            <h3 style="color: #F1F5F9;">Belum ada gambar</h3>
-            <p style="color: #64748B;">Upload gambar ban untuk memulai deteksi</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col_right:
-        st.markdown("""
-        <div style="background: #1E293B; border-radius: 20px; padding: 1.5rem;">
-            <h4 style="color: #F1F5F9; margin-bottom: 1rem;">📌 Panduan</h4>
-            <ul style="color: #94A3B8; line-height: 1.8;">
-                <li>Gunakan gambar dengan pencahayaan yang cukup</li>
-                <li>Pastikan ban terlihat jelas (tidak terlalu jauh)</li>
-                <li>Format yang didukung: JPG, JPEG, PNG</li>
-                <li>Hasil detiksi akan muncul dalam beberapa detik</li>
-            </ul>
-        </div>
-        """, unsafe_allow_html=True)
+# ==================== FEATURES SECTION ====================
+st.markdown("""
+<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-top: 3rem;">
+    <div style="background: #18181B; border-radius: 20px; padding: 1.25rem; border: 1px solid #27272A;">
+        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">⚡</div>
+        <div style="font-weight: 600; margin-bottom: 0.25rem;">Real-time Detection</div>
+        <div style="color: #71717A; font-size: 0.75rem;">Powered by YOLOv8</div>
+    </div>
+    <div style="background: #18181B; border-radius: 20px; padding: 1.25rem; border: 1px solid #27272A;">
+        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">📊</div>
+        <div style="font-weight: 600; margin-bottom: 0.25rem;">4 Defect Types</div>
+        <div style="color: #71717A; font-size: 0.75rem;">Cracks, Shelling, Discoloration</div>
+    </div>
+    <div style="background: #18181B; border-radius: 20px; padding: 1.25rem; border: 1px solid #27272A;">
+        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🎯</div>
+        <div style="font-weight: 600; margin-bottom: 0.25rem;">90% Accuracy</div>
+        <div style="color: #71717A; font-size: 0.75rem;">Trained on 2,000+ images</div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
 # ==================== FOOTER ====================
 st.markdown("""
 <div class="footer">
-    <p>WheelScan Pro — Deteksi Kerusakan Ban dengan YOLOv8</p>
-    <p style="font-size: 0.7rem;">Dataset: Wheel Defect Detection (Roboflow) | Project SC 2026</p>
+    <p>WheelScan — AI-powered tire defect detection system</p>
+    <p style="margin-top: 0.5rem;">Dataset: Wheel Defect Detection (Roboflow) | Model: YOLOv8 | Project SC 2026</p>
 </div>
 """, unsafe_allow_html=True)
+
+st.markdown('</div>', unsafe_allow_html=True)
