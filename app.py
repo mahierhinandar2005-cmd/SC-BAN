@@ -200,8 +200,8 @@ with col_right:
         
         with st.spinner("Analyzing wheel image..."):
             time.sleep(0.3)
-            # PAKAI FILTER CONFIDENCE DAN IOU
-            results = model(tmp_path, conf=0.5, iou=0.7)
+            # 🔥 INI PERUBAHANNYA! conf=0.15 biar bisa detect gambar di luar dataset
+            results = model(tmp_path, conf=0.15, iou=0.45)
         
         result = results[0]
         
@@ -216,8 +216,8 @@ with col_right:
             
             for box in result.boxes:
                 conf = float(box.conf[0])
-                # SKIP confidence rendah
-                if conf < 0.4:
+                # SKIP confidence sangat rendah (di bawah 10%)
+                if conf < 0.1:
                     continue
                 cls = int(box.cls[0])
                 class_name = model.names[cls]
