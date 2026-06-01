@@ -5,34 +5,20 @@ import tempfile
 import os
 import time
 
-st.set_page_config(page_title="WheelScan", page_icon="🛞", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="RailWheel Inspector", page_icon="🚆", layout="wide", initial_sidebar_state="collapsed")
 
-# ==================== CUSTOM CSS PREMIUM ====================
+# ==================== CUSTOM CSS ====================
 st.markdown("""
 <style>
-    /* Font */
     @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap');
     
-    * {
-        font-family: 'Inter', sans-serif;
-    }
+    * { font-family: 'Inter', sans-serif; }
     
-    /* Hide default Streamlit elements */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
+    #MainMenu, footer, header { visibility: hidden; }
     
-    /* Main container */
-    .stApp {
-        background: #09090B;
-    }
+    .stApp { background: #0A0A0A; }
     
-    /* Custom container */
-    .main-container {
-        max-width: 1400px;
-        margin: 0 auto;
-        padding: 2rem;
-    }
+    .main-container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
     
     /* Navbar */
     .navbar {
@@ -40,12 +26,9 @@ st.markdown("""
         justify-content: space-between;
         align-items: center;
         padding: 1rem 2rem;
-        background: rgba(9, 9, 11, 0.95);
+        background: rgba(10, 10, 10, 0.95);
         backdrop-filter: blur(10px);
-        border-bottom: 1px solid #27272A;
-        position: sticky;
-        top: 0;
-        z-index: 1000;
+        border-bottom: 1px solid #2A2A2A;
         margin-bottom: 2rem;
     }
     
@@ -55,48 +38,39 @@ st.markdown("""
         gap: 0.75rem;
     }
     
-    .logo-icon {
-        font-size: 1.8rem;
-    }
+    .logo-icon { font-size: 1.8rem; }
     
     .logo-text {
         font-size: 1.25rem;
         font-weight: 600;
-        background: linear-gradient(135deg, #A78BFA 0%, #60A5FA 100%);
+        background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
     }
     
-    .nav-links {
-        display: flex;
-        gap: 2rem;
-        color: #A1A1AA;
-        font-size: 0.875rem;
-    }
-    
-    /* Hero section */
+    /* Hero */
     .hero {
         text-align: center;
-        padding: 3rem 2rem 4rem;
-        background: linear-gradient(180deg, #09090B 0%, #18181B 100%);
+        padding: 2rem 2rem 3rem;
+        background: linear-gradient(180deg, #0A0A0A 0%, #141414 100%);
         border-radius: 32px;
         margin-bottom: 3rem;
-        border: 1px solid #27272A;
+        border: 1px solid #2A2A2A;
     }
     
     .hero-badge {
         display: inline-block;
-        background: #18181B;
-        border: 1px solid #3F3F46;
+        background: #1A1A1A;
+        border: 1px solid #3A3A3A;
         border-radius: 100px;
         padding: 0.25rem 1rem;
         font-size: 0.75rem;
-        color: #A78BFA;
+        color: #FF8E53;
         margin-bottom: 1.5rem;
     }
     
     .hero h1 {
-        font-size: 3.5rem;
+        font-size: 3rem;
         font-weight: 700;
         background: linear-gradient(135deg, #FFFFFF 0%, #A1A1AA 100%);
         -webkit-background-clip: text;
@@ -104,50 +78,28 @@ st.markdown("""
         margin-bottom: 1rem;
     }
     
-    .hero p {
-        color: #A1A1AA;
-        font-size: 1.125rem;
-        max-width: 600px;
-        margin: 0 auto;
-    }
+    .hero p { color: #A1A1AA; font-size: 1rem; max-width: 600px; margin: 0 auto; }
     
-    /* Upload card */
-    .upload-card {
-        background: #18181B;
+    /* Cards */
+    .upload-card, .result-card {
+        background: #141414;
         border-radius: 24px;
-        border: 1px solid #27272A;
+        border: 1px solid #2A2A2A;
         padding: 2rem;
         transition: all 0.3s ease;
     }
     
-    .upload-card:hover {
-        border-color: #3F3F46;
-        background: #1F1F23;
-    }
-    
-    .upload-icon {
-        font-size: 3rem;
-        text-align: center;
-        margin-bottom: 1rem;
-    }
-    
-    /* Result card */
-    .result-card {
-        background: #18181B;
-        border-radius: 24px;
-        border: 1px solid #27272A;
-        overflow: hidden;
-    }
+    .upload-card:hover { border-color: #4A4A4A; background: #1A1A1A; }
     
     .result-header {
-        padding: 1rem 1.5rem;
-        background: #1F1F23;
-        border-bottom: 1px solid #27272A;
+        padding-bottom: 1rem;
+        margin-bottom: 1rem;
+        border-bottom: 1px solid #2A2A2A;
         font-weight: 600;
         color: #FFFFFF;
     }
     
-    /* Metric grid */
+    /* Metric Grid */
     .metric-grid {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
@@ -156,28 +108,19 @@ st.markdown("""
     }
     
     .metric-item {
-        background: #1F1F23;
+        background: #1A1A1A;
         border-radius: 16px;
         padding: 1rem;
         text-align: center;
-        border: 1px solid #27272A;
+        border: 1px solid #2A2A2A;
     }
     
-    .metric-value {
-        font-size: 1.75rem;
-        font-weight: 700;
-        color: #FFFFFF;
-    }
+    .metric-value { font-size: 1.75rem; font-weight: 700; color: #FFFFFF; }
+    .metric-label { font-size: 0.75rem; color: #71717A; margin-top: 0.25rem; }
     
-    .metric-label {
-        font-size: 0.75rem;
-        color: #71717A;
-        margin-top: 0.25rem;
-    }
-    
-    /* Detection list */
+    /* Detection Item */
     .detection-item {
-        background: #1F1F23;
+        background: #1A1A1A;
         border-radius: 12px;
         padding: 0.75rem 1rem;
         margin-bottom: 0.5rem;
@@ -187,42 +130,29 @@ st.markdown("""
         border-left: 3px solid;
     }
     
-    /* Status badges */
-    .status-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.5rem 1rem;
-        border-radius: 100px;
-        font-size: 0.75rem;
-        font-weight: 500;
-    }
-    
-    .status-healthy {
-        background: rgba(16, 185, 129, 0.1);
-        color: #10B981;
-        border: 1px solid rgba(16, 185, 129, 0.2);
-    }
-    
-    .status-warning {
-        background: rgba(245, 158, 11, 0.1);
-        color: #F59E0B;
-        border: 1px solid rgba(245, 158, 11, 0.2);
-    }
-    
-    .status-danger {
-        background: rgba(239, 68, 68, 0.1);
-        color: #EF4444;
-        border: 1px solid rgba(239, 68, 68, 0.2);
-    }
-    
-    /* Recommendation box */
+    /* Recommendation */
     .recommend-box {
-        background: linear-gradient(135deg, #1F1F23 0%, #18181B 100%);
+        background: #1A1A1A;
         border-radius: 16px;
         padding: 1.25rem;
         margin-top: 1rem;
-        border: 1px solid #27272A;
+        border: 1px solid #2A2A2A;
+    }
+    
+    /* Features */
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+        margin-top: 3rem;
+    }
+    
+    .feature-card {
+        background: #141414;
+        border-radius: 20px;
+        padding: 1.25rem;
+        border: 1px solid #2A2A2A;
+        text-align: center;
     }
     
     /* Footer */
@@ -231,22 +161,12 @@ st.markdown("""
         padding: 2rem;
         color: #52525B;
         font-size: 0.75rem;
-        border-top: 1px solid #27272A;
+        border-top: 1px solid #2A2A2A;
         margin-top: 3rem;
     }
     
-    /* Hide Streamlit branding */
-    .stFileUploader > div:first-child {
-        background: transparent !important;
-    }
-    
-    .stFileUploader > div:first-child > div {
-        background: transparent !important;
-    }
-    
     button {
-        background: linear-gradient(135deg, #A78BFA 0%, #60A5FA 100%) !important;
-        color: white !important;
+        background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%) !important;
         border: none !important;
         border-radius: 100px !important;
         padding: 0.5rem 1.5rem !important;
@@ -259,14 +179,10 @@ st.markdown("""
 st.markdown("""
 <div class="navbar">
     <div class="logo">
-        <span class="logo-icon">🛞</span>
-        <span class="logo-text">WheelScan</span>
+        <span class="logo-icon">🚆</span>
+        <span class="logo-text">RailWheel Inspector</span>
     </div>
-    <div class="nav-links">
-        <span>Dashboard</span>
-        <span>About</span>
-        <span>Documentation</span>
-    </div>
+    <div style="color: #71717A; font-size: 0.875rem;">Industrial AI for Railway Maintenance</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -276,10 +192,10 @@ st.markdown('<div class="main-container">', unsafe_allow_html=True)
 st.markdown("""
 <div class="hero">
     <div class="hero-badge">
-        ⚡ AI-Powered Detection
+        🚆 AI-Powered Railway Wheel Inspection
     </div>
-    <h1>Scan tires in seconds,<br>not hours.</h1>
-    <p>Advanced computer vision system that identifies tire defects automatically — cracks, shelling, discoloration, and more.</p>
+    <h1>Detect wheel defects<br>before they become failures.</h1>
+    <p>Computer vision system for automatic detection of cracks, shelling, and discoloration on railway wheels — enabling predictive maintenance.</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -290,19 +206,23 @@ def load_model():
 
 try:
     model = load_model()
+    st.markdown("""
+    <div style="background: #141414; border-radius: 12px; padding: 0.5rem 1rem; margin-bottom: 1rem; border-left: 3px solid #10B981;">
+        <p style="color: #10B981; margin: 0; font-size: 0.875rem;">✓ System ready · Model loaded</p>
+    </div>
+    """, unsafe_allow_html=True)
 except Exception as e:
     st.error(f"Failed to load model: {e}")
     st.stop()
 
-# ==================== TWO COLUMN LAYOUT ====================
+# ==================== TWO COLUMN ====================
 col_left, col_right = st.columns([1, 1], gap="large")
 
-# ==================== LEFT COLUMN - UPLOAD ====================
 with col_left:
     st.markdown('<div class="upload-card">', unsafe_allow_html=True)
-    st.markdown('<div class="upload-icon">📸</div>', unsafe_allow_html=True)
-    st.markdown('<h3 style="text-align: center; margin-bottom: 0.5rem;">Upload Tire Image</h3>', unsafe_allow_html=True)
-    st.markdown('<p style="text-align: center; color: #71717A; font-size: 0.875rem; margin-bottom: 1.5rem;">JPG, PNG or JPEG — max 10MB</p>', unsafe_allow_html=True)
+    st.markdown('<div class="upload-icon" style="font-size: 3rem; text-align: center; margin-bottom: 1rem;">📷</div>', unsafe_allow_html=True)
+    st.markdown('<h3 style="text-align: center; margin-bottom: 0.5rem;">Upload Wheel Image</h3>', unsafe_allow_html=True)
+    st.markdown('<p style="text-align: center; color: #71717A; font-size: 0.875rem; margin-bottom: 1.5rem;">JPG, PNG — max 10MB</p>', unsafe_allow_html=True)
     
     uploaded_file = st.file_uploader(
         "Choose a file",
@@ -310,28 +230,26 @@ with col_left:
         label_visibility="collapsed"
     )
     
-    st.markdown('<div style="margin-top: 1rem;"><p style="color: #52525B; font-size: 0.7rem; text-align: center;">⬆️ Drag & drop or click to browse</p></div>', unsafe_allow_html=True)
+    st.markdown('<p style="color: #52525B; font-size: 0.7rem; text-align: center; margin-top: 1rem;">⬆️ Drag & drop or click to browse</p>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-# ==================== RIGHT COLUMN - RESULT ====================
 with col_right:
     if uploaded_file is not None:
         with tempfile.NamedTemporaryFile(delete=False, suffix='.jpg') as tmp_file:
             tmp_file.write(uploaded_file.getvalue())
             tmp_path = tmp_file.name
         
-        with st.spinner("Analyzing..."):
+        with st.spinner("Analyzing wheel image..."):
             time.sleep(0.3)
             results = model(tmp_path)
         
         result = results[0]
         
         st.markdown('<div class="result-card">', unsafe_allow_html=True)
-        st.markdown('<div class="result-header">📊 Detection Result</div>', unsafe_allow_html=True)
+        st.markdown('<div class="result-header">🔍 Inspection Result</div>', unsafe_allow_html=True)
         st.image(result.plot(), use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
         
-        # Analysis section
         if result.boxes is not None and len(result.boxes) > 0:
             detected_classes = {}
             for box in result.boxes:
@@ -344,9 +262,6 @@ with col_right:
             
             has_defect = any(c != "Wheel" for c in detected_classes.keys())
             
-            st.markdown('<div style="margin-top: 1.5rem;">', unsafe_allow_html=True)
-            
-            # Metrics
             all_confs = []
             for confs in detected_classes.values():
                 all_confs.extend(confs)
@@ -368,54 +283,47 @@ with col_right:
                 </div>
                 <div class="metric-item">
                     <div class="metric-value">{len(detected_classes)}</div>
-                    <div class="metric-label">Total Objects</div>
+                    <div class="metric-label">Objects</div>
                 </div>
             </div>
             """, unsafe_allow_html=True)
             
-            # Detection details
-            st.markdown('<p style="font-weight: 500; margin-bottom: 0.75rem;">🔍 Detected Items</p>', unsafe_allow_html=True)
+            st.markdown('<p style="font-weight: 500; margin-bottom: 0.75rem;">📋 Defect Details</p>', unsafe_allow_html=True)
             
             for class_name, confs in detected_classes.items():
                 avg_conf = sum(confs) / len(confs)
                 
                 if class_name == "Wheel":
                     color = "#10B981"
-                    border_color = "rgba(16, 185, 129, 0.2)"
                     badge = "🟢 Normal"
                 elif class_name == "Cracks-Scratches":
                     color = "#F59E0B"
-                    border_color = "rgba(245, 158, 11, 0.2)"
-                    badge = "🟡 Crack / Scratch"
+                    badge = "🟡 Crack Detected"
                 elif class_name == "Shelling":
                     color = "#EF4444"
-                    border_color = "rgba(239, 68, 68, 0.2)"
-                    badge = "🔴 Shelling / Chunking"
+                    badge = "🔴 Shelling Detected"
                 elif class_name == "Discoloration":
                     color = "#F59E0B"
-                    border_color = "rgba(245, 158, 11, 0.2)"
                     badge = "🟡 Discoloration"
                 else:
                     color = "#71717A"
-                    border_color = "rgba(113, 113, 122, 0.2)"
                     badge = "⚪ Unknown"
                 
                 st.markdown(f"""
-                <div class="detection-item" style="border-left-color: {color}; background: {border_color};">
+                <div class="detection-item" style="border-left-color: {color};">
                     <span><strong>{badge}</strong> {class_name}</span>
-                    <span style="color: {color}; font-weight: 500;">{avg_conf:.1%}</span>
+                    <span style="color: {color};">{avg_conf:.1%}</span>
                 </div>
                 """, unsafe_allow_html=True)
             
-            # Recommendation
             if has_defect:
                 st.markdown("""
                 <div class="recommend-box">
                     <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
                         <span style="font-size: 1.25rem;">⚠️</span>
-                        <span style="font-weight: 600;">Action Required</span>
+                        <span style="font-weight: 600;">Maintenance Required</span>
                     </div>
-                    <p style="color: #A1A1AA; font-size: 0.875rem; margin: 0;">Tire damage detected. Schedule an inspection at your nearest service center immediately.</p>
+                    <p style="color: #A1A1AA; font-size: 0.875rem; margin: 0;">Wheel defect detected. Schedule inspection and maintenance before next operation.</p>
                 </div>
                 """, unsafe_allow_html=True)
             else:
@@ -423,20 +331,17 @@ with col_right:
                 <div class="recommend-box">
                     <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
                         <span style="font-size: 1.25rem;">✅</span>
-                        <span style="font-weight: 600;">All Good</span>
+                        <span style="font-weight: 600;">Wheel is Healthy</span>
                     </div>
-                    <p style="color: #A1A1AA; font-size: 0.875rem; margin: 0;">No defects detected. Your tire appears to be in healthy condition.</p>
+                    <p style="color: #A1A1AA; font-size: 0.875rem; margin: 0;">No defects detected. Continue routine maintenance schedule.</p>
                 </div>
                 """, unsafe_allow_html=True)
-            
-            st.markdown('</div>', unsafe_allow_html=True)
-        
         else:
             st.markdown("""
             <div style="text-align: center; padding: 2rem;">
                 <span style="font-size: 3rem;">✅</span>
                 <h3 style="margin-top: 0.5rem;">No Defects Detected</h3>
-                <p style="color: #71717A;">The uploaded tire appears to be in good condition.</p>
+                <p style="color: #71717A;">The wheel appears to be in good condition.</p>
             </div>
             """, unsafe_allow_html=True)
         
@@ -445,32 +350,32 @@ with col_right:
     else:
         st.markdown("""
         <div class="result-card">
-            <div class="result-header">📊 Detection Result</div>
+            <div class="result-header">🔍 Inspection Result</div>
             <div style="padding: 3rem 2rem; text-align: center;">
-                <div style="font-size: 3rem; opacity: 0.5;">🖼️</div>
+                <div style="font-size: 3rem; opacity: 0.5;">🚆</div>
                 <h3 style="color: #A1A1AA; margin-top: 1rem;">No image uploaded</h3>
-                <p style="color: #52525B; font-size: 0.875rem;">Upload a tire image to start detection</p>
+                <p style="color: #52525B; font-size: 0.875rem;">Upload a railway wheel image to start inspection</p>
             </div>
         </div>
         """, unsafe_allow_html=True)
 
-# ==================== FEATURES SECTION ====================
+# ==================== FEATURES ====================
 st.markdown("""
-<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-top: 3rem;">
-    <div style="background: #18181B; border-radius: 20px; padding: 1.25rem; border: 1px solid #27272A;">
-        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">⚡</div>
-        <div style="font-weight: 600; margin-bottom: 0.25rem;">Real-time Detection</div>
-        <div style="color: #71717A; font-size: 0.75rem;">Powered by YOLOv8</div>
+<div class="features-grid">
+    <div class="feature-card">
+        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🛤️</div>
+        <div style="font-weight: 600;">Railway Infrastructure</div>
+        <div style="color: #71717A; font-size: 0.75rem;">Industrial-grade inspection system</div>
     </div>
-    <div style="background: #18181B; border-radius: 20px; padding: 1.25rem; border: 1px solid #27272A;">
-        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">📊</div>
-        <div style="font-weight: 600; margin-bottom: 0.25rem;">4 Defect Types</div>
+    <div class="feature-card">
+        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🔍</div>
+        <div style="font-weight: 600;">3 Defect Types</div>
         <div style="color: #71717A; font-size: 0.75rem;">Cracks, Shelling, Discoloration</div>
     </div>
-    <div style="background: #18181B; border-radius: 20px; padding: 1.25rem; border: 1px solid #27272A;">
-        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🎯</div>
-        <div style="font-weight: 600; margin-bottom: 0.25rem;">90% Accuracy</div>
-        <div style="color: #71717A; font-size: 0.75rem;">Trained on 2,000+ images</div>
+    <div class="feature-card">
+        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">📊</div>
+        <div style="font-weight: 600;">90% Accuracy</div>
+        <div style="color: #71717A; font-size: 0.75rem;">Trained on railway wheel dataset</div>
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -478,8 +383,8 @@ st.markdown("""
 # ==================== FOOTER ====================
 st.markdown("""
 <div class="footer">
-    <p>WheelScan — AI-powered tire defect detection system</p>
-    <p style="margin-top: 0.5rem;">Dataset: Wheel Defect Detection (Roboflow) | Model: YOLOv8 | Project SC 2026</p>
+    <p>RailWheel Inspector — AI-powered railway wheel defect detection for predictive maintenance</p>
+    <p style="margin-top: 0.5rem;">Dataset: Wheel Defect Detection (Railway) | Model: YOLOv8 | Project SC 2026</p>
 </div>
 """, unsafe_allow_html=True)
 
